@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/*
+ * Design system: dark mode tipo dev-tool (no "app para niños") — elegido con
+ * ui-ux-pro-max buscando "developer tool skill tree gamified dark mode adult".
+ * Locked/active/completed son estados de gamificación añadidos a propósito,
+ * no vienen del design system base.
+ */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  --color-primary: #1e293b;
+  --color-on-primary: #ffffff;
+  --color-secondary: #334155;
+  --color-accent: #22c55e;
+  --color-background: #0f172a;
+  --color-foreground: #f8fafc;
+  --color-muted: #272f42;
+  --color-muted-foreground: #94a3b8;
+  --color-border: #475569;
+  --color-destructive: #ef4444;
+  --color-ring: #38bdf8;
+
+  /* Estados de nodo del árbol de habilidades */
+  --color-node-locked-bg: #1a2333;
+  --color-node-locked-fg: #64748b;
+  --color-node-locked-border: #2d3a52;
+
+  --color-node-active-bg: #1e293b;
+  --color-node-active-fg: #f8fafc;
+  --color-node-active-border: #f59e0b;
+  --color-node-active-glow: rgba(245, 158, 11, 0.35);
+
+  --color-node-completed-bg: #132b1f;
+  --color-node-completed-fg: #f8fafc;
+  --color-node-completed-border: #22c55e;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
