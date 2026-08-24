@@ -3,6 +3,7 @@ import { fetchTranscript } from "../transcript/transcriptService.js";
 import { routeRepository } from "../../repositories/index.js";
 import { NotFoundError } from "../../repositories/routeRepository.js";
 import { PASS_THRESHOLD } from "../../schemas/challenge.schema.js";
+import { runJavaScriptInSandbox } from "../sandbox/jsSandbox.js";
 import type { Challenge } from "../../schemas/challenge.schema.js";
 import type { GradeResult } from "../llm/types.js";
 
@@ -82,11 +83,23 @@ export async function gradeSubmission(
     }
 
     case "code": {
-      // TODO: ejecutar challenge.testCode contra submission.codeSubmission en un
-      // sandbox aislado (ej. Vercel Sandbox / contenedor descartable). No se
-      // ejecuta código de usuario sin sandbox por seguridad — placeholder explícito
-      // en vez de un "false pass" silencioso.
-      throw new Error("Ejecución de código en sandbox todavía no implementada");
+      if (challenge.language.trim().toLowerCase() !== "javascript") {
+        // El sandbox actual (node:vm) solo puede correr JS de forma segura.
+        // No fallamos silenciosamente: se lo decimos al usuario tal cual.
+        return {
+          passed: false,
+          score: 0,
+          feedback: `Por ahora solo se puede ejecutar y calificar código JavaScript (este reto pidió "${challenge.language}"). Soporte multi-lenguaje pendiente.`,
+        };
+      }
+      const result = runJavaScriptInSandbox(submission.codeSubmission ?? "", challenge.testCode);
+      return {
+        passed: result.passed,
+        score: result.passed ? 100 : 0,
+        feedback: result.passed
+          ? "¡Todas las pruebas pasaron!"
+          : `No pasó: ${result.error ?? "error desconocido al ejecutar tu código"}`,
+      };
     }
 
     case "open_response": {

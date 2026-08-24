@@ -82,7 +82,10 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
           content: needsMultipleItems
             ? `Genera exactamente ${MIN_QUESTIONS_PER_CHALLENGE} preguntas de práctica de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo. ` +
               "Varía la dificultad y el ángulo de cada pregunta (no repitas la misma idea reformulada) para cubrir el tema con profundidad real."
-            : `Genera un reto práctico de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo.`,
+            : contentType === "procedural"
+              ? "Genera un reto de código. IMPORTANTE: `language` debe ser siempre \"javascript\" (es el único lenguaje que el sandbox actual puede ejecutar, sin excepción). " +
+                "`testCode` se ejecuta en el mismo scope que el código del usuario (puede llamar directo a sus funciones/variables) y DEBE lanzar `throw new Error(\"mensaje claro\")` si una aserción falla; si todas pasan, no debe lanzar nada. No uses ninguna librería externa de testing (no jest/chai/etc), solo JS plano con `if` + `throw`."
+              : `Genera un reto práctico de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo.`,
         },
         {
           role: "user",
