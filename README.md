@@ -70,11 +70,15 @@ npm run dev             # http://localhost:5173 (con proxy a /api -> :4000)
 Ver el one-pager para el detalle de alcance. Resumen:
 
 - ✅ Generación de malla + videos, documento y reto on-demand por nodo.
-- ✅ Retos tipo `factual` (quiz) y `language` (flashcard) con auto-calificación
-  barata (comparación directa, sin gastar IA).
-- 🚧 Reto tipo `procedural` (código): el schema y el flujo están listos, pero
-  la ejecución en sandbox todavía no está implementada
-  (`backend/src/services/challenges/challengeService.ts`).
+- ✅ Retos tipo `factual` (quiz) y `language` (flashcard): mínimo 10 preguntas
+  por nodo, recorridas una por una, con auto-calificación barata (comparación
+  directa, sin gastar IA) y umbral de 70% para completar el nodo.
+- ✅ Reto tipo `procedural` (código): se ejecuta de verdad contra `testCode`
+  en un sandbox `node:vm` con timeout (`backend/src/services/sandbox/jsSandbox.ts`).
+  **No es un sandbox aislado de verdad** (limitación de `node:vm` documentada
+  en el propio código) — aceptable para MVP personal de bajo tráfico, hay que
+  reemplazarlo por un sandbox real antes de exponerlo a usuarios externos.
+  Por ahora solo soporta JavaScript.
 - ⏸️ Reto tipo `creative` (LLM-como-juez): fuera de alcance del MVP a propósito.
 - 🚧 Transcripción real de YouTube: `transcriptService.ts` es un stub — hoy el
   documento/reto se genera sin transcripción (degradado, marcado como tal en
