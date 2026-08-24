@@ -50,8 +50,18 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
     return CurriculumSchema.parse(JSON.parse(raw));
   }
 
-  async generateNodeDocument({ nodeTitle, nodeSummary, locale, videoTranscript }: GenerateDocumentInput): Promise<NodeDocument> {
+  async generateNodeDocument({
+    nodeTitle,
+    nodeSummary,
+    locale,
+    videoTranscript,
+    relatedSources,
+  }: GenerateDocumentInput): Promise<NodeDocument> {
     const groundedInTranscript = Boolean(videoTranscript);
+    const sourcesBlock =
+      relatedSources.length > 0
+        ? relatedSources.map((s, i) => `[${i + 1}] ${s.title} — ${s.url}\n${s.snippet}`).join("\n\n")
+        : "(ninguna encontrada)";
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: [
@@ -63,11 +73,15 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
               ? "Básate estrictamente en la transcripción provista, no inventes datos fuera de ella."
               : "No hay transcripción disponible: sé conservador, marca claramente qué es un resumen general del tema y evita afirmaciones muy específicas.") +
             " " +
+            (relatedSources.length > 0
+              ? 'Al final agrega una sección "## Lecturas sugeridas" con links markdown reales a las fuentes numeradas que te doy abajo (formato `[Título](URL)`), solo las que de verdad apliquen al tema — no fuerces las que no calcen.'
+              : 'No agregues sección de "Lecturas sugeridas": no tienes fuentes reales para esta nota, y JAMÁS debes inventar una URL o cita que parezca real sin serlo.') +
+            " " +
             localeInstruction(locale),
         },
         {
           role: "user",
-          content: `Nodo: ${nodeTitle}\nResumen: ${nodeSummary}\n\nTranscripción:\n${videoTranscript ?? "(no disponible)"}`,
+          content: `Nodo: ${nodeTitle}\nResumen: ${nodeSummary}\n\nTranscripción:\n${videoTranscript ?? "(no disponible)"}\n\nFuentes reales encontradas por búsqueda web:\n${sourcesBlock}`,
         },
       ],
     });

@@ -1,6 +1,7 @@
 import type { Curriculum } from "../../schemas/curriculum.schema.js";
 import type { Challenge, ContentType } from "../../schemas/challenge.schema.js";
 import type { LocaleCode } from "../../schemas/locale.js";
+import type { SearchResult } from "../search/tavilySearchService.js";
 
 /**
  * Contrato único para cualquier proveedor de IA. El resto del backend habla
@@ -36,6 +37,8 @@ export interface GenerateDocumentInput {
   locale: LocaleCode;
   /** Transcripción real del video (o null si no está disponible) */
   videoTranscript: string | null;
+  /** Fuentes reales encontradas por búsqueda web (array vacío si Tavily no está configurado) */
+  relatedSources: SearchResult[];
 }
 
 export interface NodeDocument {

@@ -13,6 +13,11 @@ const EnvSchema = z.object({
 
   YOUTUBE_API_KEY: z.string().optional(),
 
+  // Opcional a propósito: sin esta key, el documento complementario se sigue
+  // generando igual, solo sin la sección de "Lecturas sugeridas" con fuentes
+  // reales -- no queremos que la app se caiga por un servicio secundario.
+  TAVILY_API_KEY: z.string().optional(),
+
   SUPABASE_URL: z.string().optional(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().optional(),
 
