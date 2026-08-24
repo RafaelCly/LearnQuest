@@ -45,16 +45,31 @@ export interface NodeDocument {
   groundedInTranscript: boolean;
 }
 
+export interface PublicQuizItem {
+  prompt: string;
+  options: string[];
+}
+
+export interface PublicFlashcardItem {
+  prompt: string;
+}
+
 export type PublicChallenge =
   | { kind: "code"; contentType: "procedural"; prompt: string; language: string; starterCode: string }
-  | { kind: "quiz"; contentType: "factual"; prompt: string; options: string[] }
-  | { kind: "flashcard"; contentType: "language"; prompt: string }
+  | { kind: "quiz"; contentType: "factual"; items: PublicQuizItem[] }
+  | { kind: "flashcard"; contentType: "language"; items: PublicFlashcardItem[] }
   | { kind: "open_response"; contentType: "creative"; prompt: string; rubric: string };
+
+export interface ItemResult {
+  correct: boolean;
+  explanationOrExpected: string;
+}
 
 export interface GradeResult {
   passed: boolean;
   score: number;
   feedback: string;
+  itemResults?: ItemResult[];
 }
 
 export interface SubmitChallengeResponse {

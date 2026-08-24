@@ -40,8 +40,8 @@ export async function fetchNodeChallenge(routeId: string, nodeId: string): Promi
 }
 
 export interface ChallengeSubmission {
-  quizOptionIndex?: number;
-  flashcardAnswer?: string;
+  quizAnswers?: number[];
+  flashcardAnswers?: string[];
   codeSubmission?: string;
   openResponseText?: string;
 }

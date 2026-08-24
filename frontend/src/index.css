@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 /*
  * Design system: dark mode tipo dev-tool (no "app para niños") — elegido con
@@ -22,22 +23,59 @@
   --color-destructive: #ef4444;
   --color-ring: #38bdf8;
 
-  /* Estados de nodo del árbol de habilidades */
+  /* Estados de nodo del camino de habilidades */
   --color-node-locked-bg: #1a2333;
-  --color-node-locked-fg: #64748b;
+  --color-node-locked-fg: #94a3b8; /* 6.15:1 sobre el bg del nodo, cumple AA (antes #64748b, 3.3:1) */
   --color-node-locked-border: #2d3a52;
 
   --color-node-active-bg: #1e293b;
   --color-node-active-fg: #f8fafc;
   --color-node-active-border: #f59e0b;
-  --color-node-active-glow: rgba(245, 158, 11, 0.35);
+  --color-node-active-glow: rgba(245, 158, 11, 0.45);
 
   --color-node-completed-bg: #132b1f;
   --color-node-completed-fg: #f8fafc;
   --color-node-completed-border: #22c55e;
+  --color-node-completed-glow: rgba(34, 197, 94, 0.4);
+
+  /* Sendero que conecta los nodos */
+  --color-trail: #334155;
+  --color-trail-active: #f59e0b;
+  --color-trail-completed: #22c55e;
 }
 
 body {
   background-color: var(--color-background);
   color: var(--color-foreground);
+}
+
+/* Documento complementario: markdown renderizado por react-markdown */
+.doc-prose {
+  --tw-prose-body: var(--color-foreground);
+  --tw-prose-headings: var(--color-foreground);
+  --tw-prose-bold: var(--color-foreground);
+  --tw-prose-links: var(--color-accent);
+  --tw-prose-bullets: var(--color-muted-foreground);
+  --tw-prose-hr: var(--color-border);
+  --tw-prose-code: var(--color-accent);
+  --tw-prose-quotes: var(--color-muted-foreground);
+  --tw-prose-quote-borders: var(--color-border);
+}
+
+@keyframes node-celebrate {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.14); }
+  60% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+.node-celebrate {
+  animation: node-celebrate 550ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes trail-shimmer {
+  to { stroke-dashoffset: -24; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .node-celebrate { animation: none; }
 }

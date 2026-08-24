@@ -13,23 +13,18 @@ interface ChallengePanelProps {
 /**
  * El tipo de contenido del nodo determina qué plantilla de reto se renderiza
  * — la pieza central de la idea de "retos genéricos por tipo, no por tema".
+ * Quiz/flashcard recorren varias preguntas y solo llaman a onSubmit al final.
  */
 export function ChallengePanel({ challenge, onSubmit, disabled }: ChallengePanelProps) {
   switch (challenge.kind) {
     case "quiz":
-      return (
-        <QuizChallenge
-          challenge={challenge}
-          disabled={disabled}
-          onSubmit={(quizOptionIndex) => onSubmit({ quizOptionIndex })}
-        />
-      );
+      return <QuizChallenge challenge={challenge} disabled={disabled} onComplete={(quizAnswers) => onSubmit({ quizAnswers })} />;
     case "flashcard":
       return (
         <FlashcardChallenge
           challenge={challenge}
           disabled={disabled}
-          onSubmit={(flashcardAnswer) => onSubmit({ flashcardAnswer })}
+          onComplete={(flashcardAnswers) => onSubmit({ flashcardAnswers })}
         />
       );
     case "code":

@@ -1,16 +1,25 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Sparkles } from "lucide-react";
+import { Sparkles, RotateCcw, ArrowLeft } from "lucide-react";
 import { generateRoute, fetchRoute } from "./lib/api";
 import { SkillTreeCanvas } from "./components/SkillTree/SkillTreeCanvas";
 import { ProgressBar } from "./components/ProgressBar";
 import { NodeDetailPanel } from "./components/NodeDetail/NodeDetailPanel";
 import type { RouteNode } from "./types/route";
 
+const GENERATING_MESSAGES = [
+  "Analizando el tema...",
+  "Diseñando la malla curricular...",
+  "Buscando los mejores videos...",
+  "Preparando los retos prácticos...",
+];
+
 export default function App() {
   const [topic, setTopic] = useState("");
   const [routeId, setRouteId] = useState<string | null>(null);
-  const [selectedNode, setSelectedNode] = useState<RouteNode | null>(null);
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [celebratingNodeId, setCelebratingNodeId] = useState<string | null>(null);
+  const [messageIndex, setMessageIndex] = useState(0);
 
   const generateMutation = useMutation({
     mutationFn: (topic: string) => generateRoute(topic),
@@ -22,6 +31,37 @@ export default function App() {
     queryFn: () => fetchRoute(routeId!),
     enabled: Boolean(routeId),
   });
+
+  useEffect(() => {
+    if (!generateMutation.isPending) {
+      setMessageIndex(0);
+      return;
+    }
+    const interval = setInterval(() => setMessageIndex((i) => (i + 1) % GENERATING_MESSAGES.length), 2200);
+    return () => clearInterval(interval);
+  }, [generateMutation.isPending]);
+
+  const celebrateTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function celebrate(nodeId: string) {
+    setCelebratingNodeId(nodeId);
+    if (celebrateTimeout.current) clearTimeout(celebrateTimeout.current);
+    celebrateTimeout.current = setTimeout(() => setCelebratingNodeId(null), 700);
+  }
+
+  function handleContinue() {
+    const nodes = routeQuery.data?.nodes ?? [];
+    const next = nodes.find((n) => n.status === "active" && n.id !== selectedNodeId);
+    setSelectedNodeId(next?.id ?? null);
+  }
+
+  function handleNewRoute() {
+    setRouteId(null);
+    setSelectedNodeId(null);
+    setTopic("");
+    generateMutation.reset();
+  }
+
+  const selectedNode: RouteNode | undefined = routeQuery.data?.nodes.find((n) => n.id === selectedNodeId);
 
   if (!routeId) {
     return (
@@ -43,19 +83,36 @@ export default function App() {
           <input
             type="text"
             value={topic}
+            disabled={generateMutation.isPending}
             onChange={(e) => setTopic(e.target.value)}
             placeholder="Ej. React Hooks, Historia del Perú, Verbos irregulares en inglés..."
-            className="w-full px-4 py-3 rounded-lg border border-border bg-secondary/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full px-4 py-3 rounded-lg border border-border bg-secondary/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60"
           />
           <button
             type="submit"
             disabled={!topic.trim() || generateMutation.isPending}
-            className="w-full py-3 rounded-lg bg-accent text-on-primary font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-3 rounded-lg bg-accent text-on-primary font-semibold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition-opacity"
           >
-            {generateMutation.isPending ? "Generando ruta..." : "Generar ruta"}
+            {generateMutation.isPending ? "Generando..." : "Generar ruta"}
           </button>
+
+          {generateMutation.isPending && (
+            <p className="text-center text-sm text-muted-foreground animate-pulse" aria-live="polite">
+              {GENERATING_MESSAGES[messageIndex]}
+            </p>
+          )}
+
           {generateMutation.isError && (
-            <p className="text-sm text-destructive">{(generateMutation.error as Error).message}</p>
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2">
+              <p className="text-sm text-destructive">{(generateMutation.error as Error).message}</p>
+              <button
+                type="button"
+                onClick={() => topic.trim() && generateMutation.mutate(topic.trim())}
+                className="flex items-center gap-1 text-sm font-medium text-foreground shrink-0 cursor-pointer"
+              >
+                <RotateCcw size={14} /> Reintentar
+              </button>
+            </div>
           )}
         </form>
       </main>
@@ -64,8 +121,17 @@ export default function App() {
 
   return (
     <main className="min-h-dvh flex flex-col">
-      <header className="px-6 py-4 border-b border-border space-y-3">
-        <h1 className="text-xl font-bold text-foreground">{routeQuery.data?.title ?? "Cargando ruta..."}</h1>
+      <header className="px-4 md:px-6 py-4 border-b border-border space-y-3">
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-lg md:text-xl font-bold text-foreground">{routeQuery.data?.title ?? "Cargando ruta..."}</h1>
+          <button
+            type="button"
+            onClick={handleNewRoute}
+            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground shrink-0 cursor-pointer"
+          >
+            <ArrowLeft size={14} /> Nueva ruta
+          </button>
+        </div>
         {routeQuery.data && (
           <ProgressBar
             percent={routeQuery.data.progress.percent}
@@ -75,16 +141,28 @@ export default function App() {
         )}
       </header>
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 p-6">
-          {routeQuery.isLoading && <p className="text-muted-foreground">Cargando &aacute;rbol de habilidades...</p>}
+      <div className="flex-1 flex overflow-hidden relative">
+        <div className="flex-1 p-4 md:p-6 min-w-0">
+          {routeQuery.isLoading && <p className="text-muted-foreground">Cargando el camino de aprendizaje...</p>}
           {routeQuery.data && (
-            <SkillTreeCanvas nodes={routeQuery.data.nodes} onSelectNode={setSelectedNode} />
+            <SkillTreeCanvas
+              nodes={routeQuery.data.nodes}
+              onSelectNode={(n) => setSelectedNodeId(n.id)}
+              celebratingNodeId={celebratingNodeId}
+            />
           )}
         </div>
 
         {selectedNode && (
-          <NodeDetailPanel routeId={routeId} node={selectedNode} onClose={() => setSelectedNode(null)} />
+          <div className="fixed inset-0 z-40 md:static md:inset-auto md:z-auto">
+            <NodeDetailPanel
+              routeId={routeId}
+              node={selectedNode}
+              onClose={() => setSelectedNodeId(null)}
+              onPassed={celebrate}
+              onContinue={handleContinue}
+            />
+          </div>
         )}
       </div>
     </main>

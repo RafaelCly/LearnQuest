@@ -1,15 +1,17 @@
 import type { Node as FlowNode, Edge as FlowEdge } from "reactflow";
 import type { RouteNode } from "../../types/route";
 
-const NODE_WIDTH = 240;
-const NODE_HEIGHT = 96;
-const LEVEL_GAP_Y = 160;
-const NODE_GAP_X = 40;
+const NODE_DIAMETER = 84;
+const LEVEL_GAP_Y = 168;
+const NODE_GAP_X = 56;
+/** Desplazamiento horizontal alternado por nivel: le da forma de sendero serpenteante en vez de grilla rígida. */
+const ZIGZAG_AMPLITUDE = 70;
 
 /**
- * Layout vertical tipo árbol de habilidades: el nivel de cada nodo es
+ * Layout vertical tipo sendero de misiones: el nivel de cada nodo es
  * 1 + el nivel máximo de sus prerequisitos (los nodos raíz quedan en el
- * nivel 0, arriba). Dentro de un nivel se reparten horizontalmente.
+ * nivel 0, arriba). Los niveles se desplazan alternadamente en zigzag para
+ * que la ruta se sienta como un camino, no como un organigrama.
  */
 export function layoutSkillTree(nodes: RouteNode[]): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
   const nodeById = new Map(nodes.map((n) => [n.id, n]));
@@ -39,13 +41,16 @@ export function layoutSkillTree(nodes: RouteNode[]): { flowNodes: FlowNode[]; fl
 
   const flowNodes: FlowNode[] = [];
   for (const [level, levelNodes] of nodesByLevel) {
-    const rowWidth = levelNodes.length * NODE_WIDTH + (levelNodes.length - 1) * NODE_GAP_X;
+    const rowWidth = levelNodes.length * NODE_DIAMETER + (levelNodes.length - 1) * NODE_GAP_X;
+    // Zigzag solo cuando el nivel es angosto (1-2 nodos); niveles anchos (hubs
+    // con varias ramas) se mantienen centrados para no verse descuadrados.
+    const zigzag = levelNodes.length <= 2 ? (level % 2 === 0 ? -1 : 1) * ZIGZAG_AMPLITUDE : 0;
     levelNodes.forEach((node, index) => {
       flowNodes.push({
         id: node.id,
         type: "skillNode",
         position: {
-          x: index * (NODE_WIDTH + NODE_GAP_X) - rowWidth / 2,
+          x: index * (NODE_DIAMETER + NODE_GAP_X) - rowWidth / 2 + zigzag,
           y: level * LEVEL_GAP_Y,
         },
         data: { node },
@@ -56,16 +61,23 @@ export function layoutSkillTree(nodes: RouteNode[]): { flowNodes: FlowNode[]; fl
   const flowEdges: FlowEdge[] = nodes.flatMap((node) =>
     node.prerequisites
       .filter((id) => nodeById.has(id))
-      .map((prerequisiteId) => ({
-        id: `${prerequisiteId}->${node.id}`,
-        source: prerequisiteId,
-        target: node.id,
-        animated: node.status === "active",
-        style: { stroke: "var(--color-border)", strokeWidth: 2 },
-      }))
+      .map((prerequisiteId) => {
+        const source = nodeById.get(prerequisiteId)!;
+        const traveled = source.status === "completed" && node.status !== "locked";
+        const isNext = source.status === "completed" && node.status === "active";
+        const color = traveled ? "var(--color-trail-completed)" : isNext ? "var(--color-trail-active)" : "var(--color-trail)";
+        return {
+          id: `${prerequisiteId}->${node.id}`,
+          source: prerequisiteId,
+          target: node.id,
+          type: "smoothstep",
+          animated: isNext,
+          style: { stroke: color, strokeWidth: 4, strokeDasharray: traveled ? undefined : "2 10", strokeLinecap: "round" },
+        };
+      })
   );
 
   return { flowNodes, flowEdges };
 }
 
-export { NODE_WIDTH, NODE_HEIGHT };
+export { NODE_DIAMETER };
