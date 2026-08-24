@@ -18,14 +18,21 @@ const GENERATING_MESSAGES = [
 export default function App() {
   const [topic, setTopic] = useState("");
   const [locale, setLocale] = useState<LocaleCode>("es");
-  const [routeId, setRouteId] = useState<string | null>(null);
+  // Se inicializa desde la URL (?ruta=<id>) para que un refresh de página no
+  // te bote a la pantalla de inicio y te haga perder acceso a la ruta.
+  const [routeId, setRouteId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("ruta"));
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [celebratingNodeId, setCelebratingNodeId] = useState<string | null>(null);
   const [messageIndex, setMessageIndex] = useState(0);
 
   const generateMutation = useMutation({
     mutationFn: ({ topic, locale }: { topic: string; locale: LocaleCode }) => generateRoute(topic, locale),
-    onSuccess: (route) => setRouteId(route.id),
+    onSuccess: (route) => {
+      setRouteId(route.id);
+      const url = new URL(window.location.href);
+      url.searchParams.set("ruta", route.id);
+      window.history.pushState({}, "", url);
+    },
   });
 
   const routeQuery = useQuery({
@@ -61,7 +68,16 @@ export default function App() {
     setSelectedNodeId(null);
     setTopic("");
     generateMutation.reset();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("ruta");
+    window.history.pushState({}, "", url);
   }
+
+  // Un link a una ruta que ya no existe (vieja, o con id inválido) no debe
+  // dejar al usuario viendo "Cargando ruta..." para siempre.
+  useEffect(() => {
+    if (routeQuery.isError) handleNewRoute();
+  }, [routeQuery.isError]);
 
   const selectedNode: RouteNode | undefined = routeQuery.data?.nodes.find((n) => n.id === selectedNodeId);
 
