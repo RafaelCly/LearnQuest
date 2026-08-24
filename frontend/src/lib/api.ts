@@ -6,7 +6,10 @@ import type {
   SubmitChallengeResponse,
 } from "../types/route";
 
-const client = axios.create({ baseURL: "/api" });
+// En local, "/api" pasa por el proxy de Vite (vite.config.ts) hacia
+// localhost:4000. En producción no hay ese proxy -- VITE_API_BASE_URL debe
+// apuntar a la URL pública del backend (ver frontend/.env.example).
+const client = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL || "/api" });
 
 // El backend responde siempre { error: { code, message, details? } } —
 // normalizamos a un Error con ese mensaje para que los componentes no
