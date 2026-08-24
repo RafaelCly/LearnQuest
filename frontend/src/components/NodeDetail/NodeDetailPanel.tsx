@@ -2,8 +2,22 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { X, ExternalLink, TriangleAlert, VideoOff, FileText, Swords, ArrowLeft } from "lucide-react";
-import type { RouteNode } from "../../types/route";
+import {
+  X,
+  ExternalLink,
+  TriangleAlert,
+  VideoOff,
+  FileText,
+  Swords,
+  ArrowLeft,
+  Clock,
+  Code2,
+  BookOpen,
+  Languages,
+  Palette,
+  type LucideIcon,
+} from "lucide-react";
+import type { RouteNode, ContentType, Difficulty } from "../../types/route";
 import { fetchNodeDocument, fetchNodeChallenge, submitChallenge, type ChallengeSubmission } from "../../lib/api";
 import { ChallengePanel } from "./ChallengePanel";
 import { ChallengeResults } from "./ChallengeResults";
@@ -86,7 +100,7 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
 
       {view === "lesson" ? (
         <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 fade-up-enter">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:items-start">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
             {/* --- Video (fijo al hacer scroll en desktop) --- */}
             <section className="lg:sticky lg:top-20">
               {embedUrl ? (
@@ -117,10 +131,12 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
                 </div>
               )}
 
+              <NodeMetaCard node={node} />
+
               <button
                 type="button"
                 onClick={() => setView("challenge")}
-                className="mt-6 hidden w-full items-center justify-center gap-2 rounded-2xl bg-action py-4 text-sm font-semibold text-on-action cursor-pointer transition-all active:scale-[0.98] lg:flex"
+                className="mt-4 hidden w-full items-center justify-center gap-2 rounded-2xl bg-action py-4 text-sm font-semibold text-on-action cursor-pointer transition-all active:scale-[0.98] lg:flex"
               >
                 <Swords size={18} /> Iniciar prueba
               </button>
@@ -191,6 +207,56 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
     </div>
   );
 }
+
+/**
+ * Rellena el espacio vacío que quedaba bajo el video/botón en desktop (la
+ * columna del documento es mucho más larga) con info real que antes no se
+ * mostraba en ningún lado de esta vista: tipo de contenido, dificultad,
+ * tiempo estimado -- ya vivían en `node`, solo no se usaban acá.
+ */
+function NodeMetaCard({ node }: { node: RouteNode }) {
+  const ContentIcon = CONTENT_TYPE_ICON[node.contentType];
+  return (
+    <div className="mt-4 grid grid-cols-3 gap-2 rounded-2xl border border-border bg-secondary/20 p-4">
+      <div className="flex flex-col items-center gap-1.5 text-center">
+        <ContentIcon size={18} className="text-accent" />
+        <p className="text-[11px] font-medium text-foreground leading-tight">{CONTENT_TYPE_LABEL[node.contentType]}</p>
+      </div>
+      <div className="flex flex-col items-center gap-1.5 text-center">
+        <Clock size={18} className="text-muted-foreground" />
+        <p className="text-[11px] font-medium text-foreground leading-tight">{node.estimatedMinutes} min</p>
+      </div>
+      <div className="flex flex-col items-center gap-1.5 text-center">
+        <DifficultyDots difficulty={node.difficulty} />
+        <p className="text-[11px] font-medium text-foreground leading-tight">{DIFFICULTY_LABEL[node.difficulty]}</p>
+      </div>
+    </div>
+  );
+}
+
+function DifficultyDots({ difficulty }: { difficulty: Difficulty }) {
+  const level = { beginner: 1, intermediate: 2, advanced: 3 }[difficulty];
+  return (
+    <div className="flex items-center gap-1" aria-hidden>
+      {[1, 2, 3].map((i) => (
+        <span key={i} className={`h-1.5 w-1.5 rounded-full ${i <= level ? "bg-node-active-border" : "bg-border"}`} />
+      ))}
+    </div>
+  );
+}
+
+const CONTENT_TYPE_ICON: Record<ContentType, LucideIcon> = {
+  procedural: Code2,
+  factual: BookOpen,
+  language: Languages,
+  creative: Palette,
+};
+
+const DIFFICULTY_LABEL: Record<Difficulty, string> = {
+  beginner: "Principiante",
+  intermediate: "Intermedio",
+  advanced: "Avanzado",
+};
 
 function DocumentSkeleton() {
   return (

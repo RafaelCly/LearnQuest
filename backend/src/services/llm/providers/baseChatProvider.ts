@@ -74,8 +74,14 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
               : "No hay transcripción disponible: sé conservador, marca claramente qué es un resumen general del tema y evita afirmaciones muy específicas.") +
             " " +
             (relatedSources.length > 0
-              ? 'Al final agrega una sección "## Lecturas sugeridas" con links markdown reales a las fuentes numeradas que te doy abajo (formato `[Título](URL)`), solo las que de verdad apliquen al tema — no fuerces las que no calcen.'
-              : 'No agregues sección de "Lecturas sugeridas": no tienes fuentes reales para esta nota, y JAMÁS debes inventar una URL o cita que parezca real sin serlo.') +
+              ? "Tienes fuentes reales numeradas más abajo. Cuando una frase del cuerpo del texto esté " +
+                "respaldada por una de ellas, agrega la referencia inline pegada a esa frase, ej: " +
+                '"...las bases de datos relacionales usan SQL [2]." usando el número de la fuente. No le pongas ' +
+                "número a afirmaciones que no puedas respaldar con las fuentes dadas — el resto del contenido " +
+                "(conocimiento general) va sin marcar, no fuerces una cita donde no aplica. " +
+                'Al final agrega "## Lecturas sugeridas" con links markdown reales a esas mismas fuentes numeradas ' +
+                "(formato `[Título](URL)`), solo las que de verdad se usaron."
+              : 'No agregues sección de "Lecturas sugeridas" ni números de cita: no tienes fuentes reales para esta nota, y JAMÁS debes inventar una URL o cita que parezca real sin serlo.') +
             " " +
             localeInstruction(locale),
         },
