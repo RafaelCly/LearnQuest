@@ -10,6 +10,7 @@
 
 create table if not exists routes (
   id uuid primary key default gen_random_uuid(),
+  locale text not null default 'es', -- 'es' | 'en' | 'fr' | 'pt' | 'de' | 'it'
   topic text not null,
   title text not null,
   description text not null,
@@ -28,3 +29,8 @@ create table if not exists route_progress (
   completed_node_ids text[] not null default '{}',
   updated_at timestamptz not null default now()
 );
+
+-- Migración: si ya corriste este schema antes de que existiera `locale`,
+-- corre esto una vez en el SQL Editor de Supabase (es seguro, no rompe filas
+-- existentes -- quedan como 'es' por default):
+--   alter table routes add column if not exists locale text not null default 'es';

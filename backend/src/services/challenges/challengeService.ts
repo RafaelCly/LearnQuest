@@ -24,6 +24,7 @@ export async function getOrGenerateChallenge(routeId: string, nodeId: string): P
     nodeTitle: node.title,
     nodeSummary: node.summary,
     contentType: node.contentType,
+    locale: route.locale,
     videoTranscript: transcript,
   });
 

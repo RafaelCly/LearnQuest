@@ -6,6 +6,7 @@ import {
   MIN_QUESTIONS_PER_CHALLENGE,
   type Challenge,
 } from "../../../schemas/challenge.schema.js";
+import { LOCALE_NAMES, type LocaleCode } from "../../../schemas/locale.js";
 import type {
   LLMProvider,
   GenerateCurriculumInput,
@@ -27,7 +28,7 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
   protected abstract client: OpenAI;
   protected abstract model: string;
 
-  async generateCurriculum({ topic, targetLevel, maxNodes = 10 }: GenerateCurriculumInput): Promise<Curriculum> {
+  async generateCurriculum({ topic, locale, targetLevel, maxNodes = 10 }: GenerateCurriculumInput): Promise<Curriculum> {
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: [
@@ -36,7 +37,8 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
           content:
             "Eres un diseñador instruccional. Genera una malla curricular progresiva (grafo de dependencias, no una lista plana) " +
             `para el tema dado. Máximo ${maxNodes} nodos. Cada nodo debe tener una searchQuery optimizada para buscar ` +
-            "el mejor video de YouTube sobre ese subtema específico, no el título literal del nodo.",
+            "el mejor video de YouTube sobre ese subtema específico, no el título literal del nodo. " +
+            localeInstruction(locale),
         },
         { role: "user", content: `Tema: "${topic}"${targetLevel ? `. Nivel objetivo: ${targetLevel}.` : ""}` },
       ],
@@ -48,7 +50,7 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
     return CurriculumSchema.parse(JSON.parse(raw));
   }
 
-  async generateNodeDocument({ nodeTitle, nodeSummary, videoTranscript }: GenerateDocumentInput): Promise<NodeDocument> {
+  async generateNodeDocument({ nodeTitle, nodeSummary, locale, videoTranscript }: GenerateDocumentInput): Promise<NodeDocument> {
     const groundedInTranscript = Boolean(videoTranscript);
     const completion = await this.client.chat.completions.create({
       model: this.model,
@@ -59,7 +61,9 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
             "Escribe una nota de estudio en markdown que complemente un video educativo. " +
             (groundedInTranscript
               ? "Básate estrictamente en la transcripción provista, no inventes datos fuera de ella."
-              : "No hay transcripción disponible: sé conservador, marca claramente qué es un resumen general del tema y evita afirmaciones muy específicas."),
+              : "No hay transcripción disponible: sé conservador, marca claramente qué es un resumen general del tema y evita afirmaciones muy específicas.") +
+            " " +
+            localeInstruction(locale),
         },
         {
           role: "user",
@@ -71,7 +75,7 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
     return { markdown: completion.choices[0]?.message?.content ?? "", groundedInTranscript };
   }
 
-  async generateChallenge({ nodeTitle, nodeSummary, contentType, videoTranscript }: GenerateChallengeInput): Promise<Challenge> {
+  async generateChallenge({ nodeTitle, nodeSummary, contentType, locale, videoTranscript }: GenerateChallengeInput): Promise<Challenge> {
     const jsonSchema = CHALLENGE_JSON_SCHEMA_BY_TYPE[contentType];
     const needsMultipleItems = contentType === "factual" || contentType === "language";
     const completion = await this.client.chat.completions.create({
@@ -79,13 +83,16 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
       messages: [
         {
           role: "system",
-          content: needsMultipleItems
-            ? `Genera exactamente ${MIN_QUESTIONS_PER_CHALLENGE} preguntas de práctica de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo. ` +
-              "Varía la dificultad y el ángulo de cada pregunta (no repitas la misma idea reformulada) para cubrir el tema con profundidad real."
-            : contentType === "procedural"
-              ? "Genera un reto de código. IMPORTANTE: `language` debe ser siempre \"javascript\" (es el único lenguaje que el sandbox actual puede ejecutar, sin excepción). " +
-                "`testCode` se ejecuta en el mismo scope que el código del usuario (puede llamar directo a sus funciones/variables) y DEBE lanzar `throw new Error(\"mensaje claro\")` si una aserción falla; si todas pasan, no debe lanzar nada. No uses ninguna librería externa de testing (no jest/chai/etc), solo JS plano con `if` + `throw`."
-              : `Genera un reto práctico de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo.`,
+          content:
+            (needsMultipleItems
+              ? `Genera exactamente ${MIN_QUESTIONS_PER_CHALLENGE} preguntas de práctica de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo. ` +
+                "Varía la dificultad y el ángulo de cada pregunta (no repitas la misma idea reformulada) para cubrir el tema con profundidad real."
+              : contentType === "procedural"
+                ? "Genera un reto de código. IMPORTANTE: `language` debe ser siempre \"javascript\" (es el único lenguaje que el sandbox actual puede ejecutar, sin excepción). " +
+                  "`testCode` se ejecuta en el mismo scope que el código del usuario (puede llamar directo a sus funciones/variables) y DEBE lanzar `throw new Error(\"mensaje claro\")` si una aserción falla; si todas pasan, no debe lanzar nada. No uses ninguna librería externa de testing (no jest/chai/etc), solo JS plano con `if` + `throw`."
+                : `Genera un reto práctico de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo.`) +
+            " " +
+            localeInstruction(locale),
         },
         {
           role: "user",
@@ -117,6 +124,14 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
 
     return JSON.parse(completion.choices[0]?.message?.content ?? "{}") as GradeResult;
   }
+}
+
+function localeInstruction(locale: LocaleCode): string {
+  return (
+    `Escribe todo el texto (títulos, resúmenes, explicaciones, preguntas) en ${LOCALE_NAMES[locale]}. ` +
+    "Excepción: si el tema pide aprender otro idioma específico (ej. vocabulario o frases en un idioma distinto), " +
+    "ese contenido puntual (la palabra/frase a aprender) queda en el idioma que el tema pide, pero las instrucciones alrededor siguen en el idioma indicado arriba."
+  );
 }
 
 function challengeKindFor(contentType: GenerateChallengeInput["contentType"]) {

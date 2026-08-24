@@ -4,6 +4,7 @@ import type {
   NodeDocument,
   PublicChallenge,
   SubmitChallengeResponse,
+  LocaleCode,
 } from "../types/route";
 
 // En local, "/api" pasa por el proxy de Vite (vite.config.ts) hacia
@@ -22,8 +23,8 @@ client.interceptors.response.use(
   }
 );
 
-export async function generateRoute(topic: string, targetLevel?: string): Promise<RouteView> {
-  const { data } = await client.post<RouteView>("/routes", { topic, targetLevel });
+export async function generateRoute(topic: string, locale: LocaleCode, targetLevel?: string): Promise<RouteView> {
+  const { data } = await client.post<RouteView>("/routes", { topic, locale, targetLevel });
   return data;
 }
 

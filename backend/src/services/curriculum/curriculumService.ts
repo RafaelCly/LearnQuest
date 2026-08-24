@@ -4,9 +4,11 @@ import { findBestVideoForNode, type VideoResult } from "../youtube/youtubeServic
 import { routeRepository } from "../../repositories/index.js";
 import type { Route } from "../../models/route.js";
 import type { CurriculumNode } from "../../schemas/curriculum.schema.js";
+import { DEFAULT_LOCALE, type LocaleCode } from "../../schemas/locale.js";
 
 export interface GenerateRouteParams {
   topic: string;
+  locale?: LocaleCode;
   targetLevel?: "beginner" | "intermediate" | "advanced";
 }
 
@@ -17,14 +19,15 @@ export interface GenerateRouteParams {
  * services/curriculum/documentService), para no gastar presupuesto de IA en
  * nodos que el usuario nunca llega a abrir.
  */
-export async function generateRoute({ topic, targetLevel }: GenerateRouteParams): Promise<Route> {
+export async function generateRoute({ topic, locale = DEFAULT_LOCALE, targetLevel }: GenerateRouteParams): Promise<Route> {
   const llm = getLLMProvider();
-  const curriculum = await llm.generateCurriculum({ topic, targetLevel });
+  const curriculum = await llm.generateCurriculum({ topic, locale, targetLevel });
 
-  const videosByNodeId = await fetchVideosWithConcurrencyLimit(curriculum.nodes, 3);
+  const videosByNodeId = await fetchVideosWithConcurrencyLimit(curriculum.nodes, locale, 3);
 
   const route: Route = {
     id: randomUUID(),
+    locale,
     curriculum,
     videosByNodeId,
     documentsByNodeId: {},
@@ -38,6 +41,7 @@ export async function generateRoute({ topic, targetLevel }: GenerateRouteParams)
 
 async function fetchVideosWithConcurrencyLimit(
   nodes: CurriculumNode[],
+  locale: LocaleCode,
   concurrency: number
 ): Promise<Record<string, VideoResult | null>> {
   const results: Record<string, VideoResult | null> = {};
@@ -48,7 +52,7 @@ async function fetchVideosWithConcurrencyLimit(
       const node = queue.shift();
       if (!node) return;
       try {
-        results[node.id] = await findBestVideoForNode(node.searchQuery);
+        results[node.id] = await findBestVideoForNode(node.searchQuery, locale);
       } catch (err) {
         // Un video que falla no debe tumbar la ruta entera; el nodo queda
         // sin video y el frontend lo muestra como "sin video disponible".

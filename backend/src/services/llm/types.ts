@@ -1,5 +1,6 @@
 import type { Curriculum } from "../../schemas/curriculum.schema.js";
 import type { Challenge, ContentType } from "../../schemas/challenge.schema.js";
+import type { LocaleCode } from "../../schemas/locale.js";
 
 /**
  * Contrato único para cualquier proveedor de IA. El resto del backend habla
@@ -21,6 +22,8 @@ export interface LLMProvider {
 
 export interface GenerateCurriculumInput {
   topic: string;
+  /** Idioma en el que debe salir todo el contenido generado (títulos, resúmenes, preguntas). */
+  locale: LocaleCode;
   /** Nivel deseado por el usuario, si lo indicó */
   targetLevel?: "beginner" | "intermediate" | "advanced";
   /** Máximo de nodos, para controlar costo (default aplicado en el service) */
@@ -30,6 +33,7 @@ export interface GenerateCurriculumInput {
 export interface GenerateDocumentInput {
   nodeTitle: string;
   nodeSummary: string;
+  locale: LocaleCode;
   /** Transcripción real del video (o null si no está disponible) */
   videoTranscript: string | null;
 }
@@ -44,6 +48,7 @@ export interface GenerateChallengeInput {
   nodeTitle: string;
   nodeSummary: string;
   contentType: ContentType;
+  locale: LocaleCode;
   videoTranscript: string | null;
 }
 

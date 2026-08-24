@@ -7,9 +7,11 @@ import { routeRepository } from "../repositories/index.js";
 import { computeGlobalProgress, computeNodeStatuses } from "../models/route.js";
 import type { Challenge } from "../schemas/challenge.schema.js";
 import { notFound } from "../lib/httpError.js";
+import { LocaleCodeSchema, DEFAULT_LOCALE } from "../schemas/locale.js";
 
 export const GenerateRouteBodySchema = z.object({
   topic: z.string().min(2, "El tema es muy corto").max(200),
+  locale: LocaleCodeSchema.default(DEFAULT_LOCALE),
   targetLevel: z.enum(["beginner", "intermediate", "advanced"]).optional(),
 });
 
@@ -29,8 +31,8 @@ export const SubmitChallengeBodySchema = z.object({
  */
 export async function postGenerateRoute(req: Request, res: Response, next: NextFunction) {
   try {
-    const { topic, targetLevel } = req.body as z.infer<typeof GenerateRouteBodySchema>;
-    const route = await generateRoute({ topic, targetLevel });
+    const { topic, locale, targetLevel } = req.body as z.infer<typeof GenerateRouteBodySchema>;
+    const route = await generateRoute({ topic, locale, targetLevel });
     const progress = await routeRepository.getProgress(route.id);
     res.status(201).json(toRouteView(route, progress.completedNodeIds));
   } catch (err) {
@@ -115,6 +117,7 @@ function toRouteView(route: Awaited<ReturnType<typeof generateRoute>>, completed
   const statuses = computeNodeStatuses(route.curriculum.nodes, completedNodeIds);
   return {
     id: route.id,
+    locale: route.locale,
     topic: route.curriculum.topic,
     title: route.curriculum.title,
     description: route.curriculum.description,

@@ -2,11 +2,13 @@ import type { Curriculum, CurriculumNode } from "../schemas/curriculum.schema.js
 import type { Challenge } from "../schemas/challenge.schema.js";
 import type { VideoResult } from "../services/youtube/youtubeService.js";
 import type { NodeDocument } from "../services/llm/types.js";
+import type { LocaleCode } from "../schemas/locale.js";
 
 export type NodeStatus = "locked" | "active" | "completed";
 
 export interface Route {
   id: string;
+  locale: LocaleCode;
   curriculum: Curriculum;
   videosByNodeId: Record<string, VideoResult | null>;
   documentsByNodeId: Record<string, NodeDocument | undefined>;

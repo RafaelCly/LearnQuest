@@ -4,9 +4,11 @@ import type { NodeDocument } from "../services/llm/types.js";
 import type { Challenge } from "../schemas/challenge.schema.js";
 import type { RouteRepository } from "./routeRepository.js";
 import { NotFoundError } from "./routeRepository.js";
+import { DEFAULT_LOCALE, type LocaleCode } from "../schemas/locale.js";
 
 interface RouteRow {
   id: string;
+  locale: LocaleCode | null;
   topic: string;
   title: string;
   description: string;
@@ -28,6 +30,7 @@ export class SupabaseRouteRepository implements RouteRepository {
   async createRoute(route: Route): Promise<void> {
     const { error: routeError } = await this.client.from("routes").insert({
       id: route.id,
+      locale: route.locale,
       topic: route.curriculum.topic,
       title: route.curriculum.title,
       description: route.curriculum.description,
@@ -101,6 +104,9 @@ export class SupabaseRouteRepository implements RouteRepository {
 function rowToRoute(row: RouteRow): Route {
   return {
     id: row.id,
+    // Filas creadas antes de que existiera esta columna no tienen locale --
+    // se asume el default en vez de romper la lectura de rutas viejas.
+    locale: row.locale ?? DEFAULT_LOCALE,
     curriculum: { topic: row.topic, title: row.title, description: row.description, nodes: row.nodes },
     videosByNodeId: row.videos,
     documentsByNodeId: row.documents,

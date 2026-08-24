@@ -6,6 +6,18 @@ export type ContentType = "procedural" | "factual" | "language" | "creative";
 export type Difficulty = "beginner" | "intermediate" | "advanced";
 export type NodeStatus = "locked" | "active" | "completed";
 
+/** Idioma del contenido generado (no confundir con el lenguaje de programación de un reto de código). */
+export type LocaleCode = "es" | "en" | "fr" | "pt" | "de" | "it";
+
+export const LOCALE_OPTIONS: { value: LocaleCode; label: string }[] = [
+  { value: "es", label: "Español" },
+  { value: "en", label: "English" },
+  { value: "fr", label: "Français" },
+  { value: "pt", label: "Português" },
+  { value: "de", label: "Deutsch" },
+  { value: "it", label: "Italiano" },
+];
+
 export interface VideoResult {
   videoId: string;
   title: string;
@@ -30,6 +42,7 @@ export interface RouteNode {
 
 export interface RouteView {
   id: string;
+  locale: LocaleCode;
   topic: string;
   title: string;
   description: string;

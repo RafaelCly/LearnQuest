@@ -21,6 +21,7 @@ export async function getOrGenerateNodeDocument(routeId: string, nodeId: string)
   const document = await getLLMProvider().generateNodeDocument({
     nodeTitle: node.title,
     nodeSummary: node.summary,
+    locale: route.locale,
     videoTranscript: transcript,
   });
 

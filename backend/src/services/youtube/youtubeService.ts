@@ -1,4 +1,5 @@
 import { env } from "../../config/env.js";
+import type { LocaleCode } from "../../schemas/locale.js";
 
 export interface VideoResult {
   videoId: string;
@@ -16,7 +17,7 @@ const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
  * usa IA (sería gastar presupuesto de LLM en algo que un heurístico resuelve
  * gratis): se apoya en duración + vistas + antigüedad para evitar basura SEO.
  */
-export async function findBestVideoForNode(searchQuery: string): Promise<VideoResult | null> {
+export async function findBestVideoForNode(searchQuery: string, locale: LocaleCode): Promise<VideoResult | null> {
   if (!env.YOUTUBE_API_KEY) {
     throw new Error("YOUTUBE_API_KEY no configurada");
   }
@@ -27,7 +28,7 @@ export async function findBestVideoForNode(searchQuery: string): Promise<VideoRe
   searchUrl.searchParams.set("part", "snippet");
   searchUrl.searchParams.set("type", "video");
   searchUrl.searchParams.set("maxResults", "8");
-  searchUrl.searchParams.set("relevanceLanguage", "es");
+  searchUrl.searchParams.set("relevanceLanguage", locale);
   searchUrl.searchParams.set("safeSearch", "strict");
 
   const searchRes = await fetch(searchUrl);
