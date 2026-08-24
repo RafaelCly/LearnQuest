@@ -18,7 +18,7 @@ export async function getOrGenerateChallenge(routeId: string, nodeId: string): P
   if (!node) throw new NotFoundError(`Nodo ${nodeId} no existe en la ruta ${routeId}`);
 
   const video = route.videosByNodeId[nodeId];
-  const transcript = video ? await fetchTranscript(video.videoId) : null;
+  const transcript = video ? await fetchTranscript(video.videoId, route.locale) : null;
 
   const challenge = await getLLMProvider().generateChallenge({
     nodeTitle: node.title,

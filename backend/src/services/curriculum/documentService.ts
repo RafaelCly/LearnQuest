@@ -16,7 +16,7 @@ export async function getOrGenerateNodeDocument(routeId: string, nodeId: string)
   if (!node) throw new NotFoundError(`Nodo ${nodeId} no existe en la ruta ${routeId}`);
 
   const video = route.videosByNodeId[nodeId];
-  const transcript = video ? await fetchTranscript(video.videoId) : null;
+  const transcript = video ? await fetchTranscript(video.videoId, route.locale) : null;
 
   const document = await getLLMProvider().generateNodeDocument({
     nodeTitle: node.title,
