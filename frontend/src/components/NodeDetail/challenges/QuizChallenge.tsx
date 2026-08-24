@@ -37,7 +37,7 @@ export function QuizChallenge({ challenge, onComplete, disabled }: QuizChallenge
       <div className="flex items-center gap-2">
         <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
+            className="h-full rounded-full bg-action transition-[width] duration-300 ease-out"
             style={{ width: `${(index / total) * 100}%` }}
           />
         </div>
@@ -56,9 +56,9 @@ export function QuizChallenge({ challenge, onComplete, disabled }: QuizChallenge
             aria-checked={selected === i}
             disabled={disabled}
             onClick={() => setSelected(i)}
-            className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-colors cursor-pointer disabled:cursor-not-allowed ${
+            className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-all cursor-pointer disabled:cursor-not-allowed active:scale-[0.99] ${
               selected === i
-                ? "border-accent bg-accent/10 text-foreground"
+                ? "border-action bg-action/10 text-foreground"
                 : "border-border bg-secondary/40 text-foreground hover:border-muted-foreground"
             }`}
           >
@@ -70,7 +70,7 @@ export function QuizChallenge({ challenge, onComplete, disabled }: QuizChallenge
         type="button"
         disabled={selected === null || disabled}
         onClick={handleNext}
-        className="w-full py-2 rounded-lg bg-accent text-on-primary text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
+        className="w-full py-2 rounded-lg bg-action text-on-action text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
       >
         {isLast ? "Terminar y calificar" : "Siguiente"}
         {!isLast && <ChevronRight size={16} />}

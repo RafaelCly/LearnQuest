@@ -59,13 +59,13 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
           type="button"
           onClick={onClose}
           aria-label="Volver al camino"
-          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:border-muted-foreground hover:text-foreground cursor-pointer"
+          className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-muted-foreground hover:border-muted-foreground hover:text-foreground cursor-pointer transition-all active:scale-95"
         >
           <X size={16} /> Cerrar
         </button>
       </header>
 
-      <div className="mx-auto max-w-3xl px-4 py-8 md:px-8 space-y-8">
+      <div className="mx-auto max-w-3xl px-4 py-8 md:px-8 space-y-8 fade-up-enter">
         {/* --- Video --- */}
         <section>
           {embedUrl ? (

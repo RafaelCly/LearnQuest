@@ -14,7 +14,13 @@
   --color-primary: #1e293b;
   --color-on-primary: #ffffff;
   --color-secondary: #334155;
+  /* Verde = éxito/recompensa (progreso, nodo completado) SOLAMENTE. */
   --color-accent: #22c55e;
+  /* Azul = acción rutinaria (enviar, siguiente, ejecutar) -- distinto del
+     verde a propósito, para que "hiciste algo" y "lo lograste" no se vean
+     igual (hallazgo del critique: un solo color de acento para todo). */
+  --color-action: #0ea5e9;
+  --color-on-action: #ffffff;
   --color-background: #0f172a;
   --color-foreground: #f8fafc;
   --color-muted: #272f42;
@@ -62,20 +68,42 @@ body {
   --tw-prose-quote-borders: var(--color-border);
 }
 
+/* Curva de "llegada confiada" recomendada para focal moments -- sin rebote/elástico. */
 @keyframes node-celebrate {
   0% { transform: scale(1); }
-  35% { transform: scale(1.14); }
-  60% { transform: scale(0.97); }
+  50% { transform: scale(1.12); }
   100% { transform: scale(1); }
 }
 .node-celebrate {
-  animation: node-celebrate 550ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: node-celebrate 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes trail-shimmer {
   to { stroke-dashoffset: -24; }
 }
 
+/* Entrada de pantalla completa (lección) / cambio de vista principal. */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up-enter {
+  animation: fade-up 350ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Entrada escalonada de los nodos del camino cuando la ruta se genera. */
+@keyframes node-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.node-enter {
+  animation: node-enter 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .node-celebrate { animation: none; }
+  .node-celebrate,
+  .node-enter,
+  .fade-up-enter {
+    animation: none !important;
+  }
 }

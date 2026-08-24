@@ -9,7 +9,7 @@ interface ChallengeResultsProps {
 
 export function ChallengeResults({ grade, onRetry, onContinue }: ChallengeResultsProps) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 fade-up-enter">
       <div
         className={`flex items-center gap-3 rounded-xl border px-4 py-3 ${
           grade.passed ? "border-node-completed-border bg-node-completed-bg" : "border-destructive/50 bg-destructive/10"
@@ -51,7 +51,7 @@ export function ChallengeResults({ grade, onRetry, onContinue }: ChallengeResult
           <button
             type="button"
             onClick={onRetry}
-            className="flex-1 py-2 rounded-lg border border-border text-foreground text-sm font-medium flex items-center justify-center gap-1.5 cursor-pointer hover:border-muted-foreground"
+            className="flex-1 py-2 rounded-lg border border-border text-foreground text-sm font-medium flex items-center justify-center gap-1.5 cursor-pointer hover:border-muted-foreground transition-all active:scale-[0.98]"
           >
             <RotateCcw size={14} /> Reintentar
           </button>
@@ -60,7 +60,7 @@ export function ChallengeResults({ grade, onRetry, onContinue }: ChallengeResult
           <button
             type="button"
             onClick={onContinue}
-            className="flex-1 py-2 rounded-lg bg-accent text-on-primary text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+            className="flex-1 py-2 rounded-lg bg-accent text-on-primary text-sm font-semibold flex items-center justify-center gap-1.5 cursor-pointer transition-all active:scale-[0.98]"
           >
             Continuar <ArrowRight size={14} />
           </button>

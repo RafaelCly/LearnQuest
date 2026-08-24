@@ -42,7 +42,7 @@ export function FlashcardChallenge({ challenge, onComplete, disabled }: Flashcar
       <div className="flex items-center gap-2">
         <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
           <div
-            className="h-full rounded-full bg-accent transition-[width] duration-300 ease-out"
+            className="h-full rounded-full bg-action transition-[width] duration-300 ease-out"
             style={{ width: `${(index / total) * 100}%` }}
           />
         </div>
@@ -63,12 +63,12 @@ export function FlashcardChallenge({ challenge, onComplete, disabled }: Flashcar
         placeholder="Escribe tu respuesta"
         autoComplete="off"
         autoFocus
-        className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/40 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        className="w-full px-3 py-2 rounded-lg border border-border bg-secondary/40 text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
       />
       <button
         type="submit"
         disabled={!current.trim() || disabled}
-        className="w-full py-2 rounded-lg bg-accent text-on-primary text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1"
+        className="w-full py-2 rounded-lg bg-action text-on-action text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-1 transition-all active:scale-[0.98]"
       >
         {isLast ? "Terminar y calificar" : "Siguiente"}
         {!isLast && <ChevronRight size={16} />}

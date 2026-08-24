@@ -29,7 +29,7 @@ export function CodeChallenge({ challenge, onSubmit, disabled }: CodeChallengePr
         type="button"
         disabled={disabled}
         onClick={() => onSubmit(code)}
-        className="w-full py-2 rounded-lg bg-accent text-on-primary text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+        className="w-full py-2 rounded-lg bg-action text-on-action text-sm font-semibold disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-[0.98]"
       >
         Ejecutar y comprobar
       </button>

@@ -40,6 +40,7 @@ export function layoutSkillTree(nodes: RouteNode[]): { flowNodes: FlowNode[]; fl
   }
 
   const flowNodes: FlowNode[] = [];
+  let order = 0;
   for (const [level, levelNodes] of nodesByLevel) {
     const rowWidth = levelNodes.length * NODE_DIAMETER + (levelNodes.length - 1) * NODE_GAP_X;
     // Zigzag solo cuando el nivel es angosto (1-2 nodos); niveles anchos (hubs
@@ -53,7 +54,9 @@ export function layoutSkillTree(nodes: RouteNode[]): { flowNodes: FlowNode[]; fl
           x: index * (NODE_DIAMETER + NODE_GAP_X) - rowWidth / 2 + zigzag,
           y: level * LEVEL_GAP_Y,
         },
-        data: { node },
+        // `order` alimenta el delay de la animación de entrada escalonada
+        // (SkillNode.tsx) -- es la posición en el camino, no el índice del nivel.
+        data: { node, order: order++ },
       });
     });
   }

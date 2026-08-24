@@ -13,23 +13,32 @@ const CONTENT_TYPE_ICON: Record<ContentType, typeof Code2> = {
 const STATUS_STYLES: Record<NodeStatus, string> = {
   locked: "bg-node-locked-bg border-node-locked-border text-node-locked-fg cursor-not-allowed",
   active:
-    "bg-node-active-bg border-node-active-border text-node-active-fg shadow-[0_0_0_6px_var(--color-node-active-glow)] cursor-pointer",
+    "bg-node-active-bg border-node-active-border text-node-active-fg shadow-[0_0_0_6px_var(--color-node-active-glow)] cursor-pointer hover:scale-[1.06] active:scale-[0.97]",
   completed:
-    "bg-node-completed-bg border-node-completed-border text-node-completed-fg shadow-[0_0_0_4px_var(--color-node-completed-glow)] cursor-pointer",
+    "bg-node-completed-bg border-node-completed-border text-node-completed-fg shadow-[0_0_0_4px_var(--color-node-completed-glow)] cursor-pointer hover:scale-[1.06] active:scale-[0.97]",
 };
 
 interface SkillNodeData {
   node: RouteNode;
   celebrate?: boolean;
+  order?: number;
 }
 
+/** Cap del delay total de la entrada escalonada (ver reference/animate.md de impeccable). */
+const MAX_STAGGER_STEPS = 12;
+const STAGGER_STEP_MS = 40;
+
 export function SkillNode({ data }: NodeProps<SkillNodeData>) {
-  const { node, celebrate } = data;
+  const { node, celebrate, order = 0 } = data;
   const Icon = CONTENT_TYPE_ICON[node.contentType];
   const isLocked = node.status === "locked";
+  const enterDelay = Math.min(order, MAX_STAGGER_STEPS) * STAGGER_STEP_MS;
 
   return (
-    <div className="flex flex-col items-center" style={{ width: NODE_DIAMETER + 56 }}>
+    <div
+      className="flex flex-col items-center node-enter"
+      style={{ width: NODE_DIAMETER + 56, animationDelay: `${enterDelay}ms` }}
+    >
       <Handle type="target" position={Position.Top} className="!bg-border !border-0 !w-1 !h-1" />
 
       <div
