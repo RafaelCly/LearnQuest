@@ -5,7 +5,7 @@ import remarkGfm from "remark-gfm";
 import {
   X,
   ExternalLink,
-  TriangleAlert,
+  Info,
   VideoOff,
   FileText,
   Swords,
@@ -16,6 +16,7 @@ import {
   Languages,
   Palette,
   Video,
+  Loader2,
   type LucideIcon,
 } from "lucide-react";
 import type { RouteNode, ContentType, Difficulty, VideoResult } from "../../types/route";
@@ -101,89 +102,94 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
 
       {view === "lesson" ? (
         <div className="mx-auto max-w-6xl px-4 py-8 md:px-8 fade-up-enter">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
-            {/* --- Video (fijo al hacer scroll en desktop) --- */}
-            <section className="lg:sticky lg:top-20">
-              {embedUrl ? (
-                <div className="overflow-hidden rounded-2xl border border-border shadow-lg shadow-black/20">
-                  <div className="relative aspect-video w-full bg-black">
-                    <iframe
-                      src={embedUrl}
-                      title={node.video?.title}
-                      className="absolute inset-0 h-full w-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  </div>
-                  <a
-                    href={node.video?.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 border-t border-border bg-secondary/40 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground"
+          {documentQuery.isLoading ? (
+            <LoadingState message="Preparando tu lección..." />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+                {/* --- Video (fijo al hacer scroll en desktop) --- */}
+                <section className="lg:sticky lg:top-20">
+                  {embedUrl ? (
+                    <div className="overflow-hidden rounded-2xl border border-border shadow-lg shadow-black/20">
+                      <div className="relative aspect-video w-full bg-black">
+                        <iframe
+                          src={embedUrl}
+                          title={node.video?.title}
+                          className="absolute inset-0 h-full w-full"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                        />
+                      </div>
+                      <a
+                        href={node.video?.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1.5 border-t border-border bg-secondary/40 px-4 py-2.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink size={12} className="shrink-0" />
+                        <span className="truncate">Ver en YouTube: {node.video?.title}</span>
+                      </a>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-14 text-muted-foreground">
+                      <VideoOff size={28} />
+                      <p className="text-sm">No se encontró un video para este nodo.</p>
+                    </div>
+                  )}
+
+                  {documentQuery.data && !documentQuery.data.groundedInTranscript && (
+                    <p className="mt-2 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <Info size={12} className="shrink-0" />
+                      Documento generado sin transcripción del video: es un resumen general del tema.
+                    </p>
+                  )}
+
+                  {node.video && node.video.alternates.length > 0 && (
+                    <OtherVideosList videos={node.video.alternates} />
+                  )}
+
+                  <NodeMetaCard node={node} />
+
+                  <button
+                    type="button"
+                    onClick={() => setView("challenge")}
+                    className="mt-4 hidden w-full items-center justify-center gap-2 rounded-2xl bg-action py-4 text-sm font-semibold text-on-action cursor-pointer transition-all active:scale-[0.98] lg:flex"
                   >
-                    <ExternalLink size={12} className="shrink-0" />
-                    <span className="truncate">Ver en YouTube: {node.video?.title}</span>
-                  </a>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border py-14 text-muted-foreground">
-                  <VideoOff size={28} />
-                  <p className="text-sm">No se encontró un video para este nodo.</p>
-                </div>
-              )}
+                    <Swords size={18} /> Iniciar prueba
+                  </button>
+                </section>
 
-              {node.video && node.video.alternates.length > 0 && (
-                <OtherVideosList videos={node.video.alternates} />
-              )}
+                {/* --- Documento --- */}
+                <section className="rounded-2xl border border-border bg-secondary/20 p-5 md:p-8">
+                  <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <FileText size={16} className="text-accent" /> Documento complementario
+                  </h2>
+                  {documentQuery.isError && <p className="text-sm text-destructive">No se pudo generar el documento.</p>}
+                  {documentQuery.data && (
+                    <div className="doc-prose prose prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{documentQuery.data.markdown}</ReactMarkdown>
+                    </div>
+                  )}
+                </section>
+              </div>
 
-              <NodeMetaCard node={node} />
-
+              {/* Botón de prueba en mobile: va al final, no fijo al lado del video */}
               <button
                 type="button"
                 onClick={() => setView("challenge")}
-                className="mt-4 hidden w-full items-center justify-center gap-2 rounded-2xl bg-action py-4 text-sm font-semibold text-on-action cursor-pointer transition-all active:scale-[0.98] lg:flex"
+                className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-action py-4 text-sm font-semibold text-on-action cursor-pointer transition-all active:scale-[0.98] lg:hidden"
               >
                 <Swords size={18} /> Iniciar prueba
               </button>
-            </section>
-
-            {/* --- Documento --- */}
-            <section className="rounded-2xl border border-border bg-secondary/20 p-5 md:p-8">
-              <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                <FileText size={16} className="text-accent" /> Documento complementario
-              </h2>
-              {documentQuery.isLoading && <DocumentSkeleton />}
-              {documentQuery.isError && <p className="text-sm text-destructive">No se pudo generar el documento.</p>}
-              {documentQuery.data && (
-                <div className="space-y-3">
-                  {!documentQuery.data.groundedInTranscript && (
-                    <p className="flex items-center gap-1.5 text-xs text-amber-400">
-                      <TriangleAlert size={13} /> Sin transcripción del video: resumen general, no específico del video.
-                    </p>
-                  )}
-                  <div className="doc-prose prose prose-invert max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{documentQuery.data.markdown}</ReactMarkdown>
-                  </div>
-                </div>
-              )}
-            </section>
-          </div>
-
-          {/* Botón de prueba en mobile: va al final, no fijo al lado del video */}
-          <button
-            type="button"
-            onClick={() => setView("challenge")}
-            className="mt-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-action py-4 text-sm font-semibold text-on-action cursor-pointer transition-all active:scale-[0.98] lg:hidden"
-          >
-            <Swords size={18} /> Iniciar prueba
-          </button>
+            </>
+          )}
         </div>
       ) : (
         <div className="mx-auto max-w-xl px-4 py-10 md:px-8 fade-up-enter">
           <h2 className="mb-6 flex items-center gap-2 text-lg font-bold text-foreground">
             <Swords size={20} className="text-node-active-border" /> Pon a prueba lo aprendido
           </h2>
-          {challengeQuery.isLoading && <ChallengeSkeleton />}
+          {challengeQuery.isLoading && <LoadingState message="Generando tu prueba..." />}
           {challengeQuery.isError && <p className="text-sm text-destructive">No se pudo generar el reto.</p>}
           {challengeQuery.data && !submitMutation.data && (
             <ChallengePanel
@@ -292,24 +298,11 @@ const DIFFICULTY_LABEL: Record<Difficulty, string> = {
   advanced: "Avanzado",
 };
 
-function DocumentSkeleton() {
+function LoadingState({ message }: { message: string }) {
   return (
-    <div className="space-y-2 animate-pulse" aria-hidden>
-      <div className="h-3 w-3/4 rounded bg-muted" />
-      <div className="h-3 w-full rounded bg-muted" />
-      <div className="h-3 w-5/6 rounded bg-muted" />
-      <div className="h-3 w-2/3 rounded bg-muted" />
-    </div>
-  );
-}
-
-function ChallengeSkeleton() {
-  return (
-    <div className="space-y-2 animate-pulse" aria-hidden>
-      <div className="h-3 w-2/3 rounded bg-muted" />
-      <div className="h-9 w-full rounded-lg bg-muted" />
-      <div className="h-9 w-full rounded-lg bg-muted" />
-      <div className="h-9 w-full rounded-lg bg-muted" />
+    <div className="flex flex-col items-center justify-center gap-3 py-24 text-muted-foreground" aria-live="polite">
+      <Loader2 size={26} className="animate-spin text-accent" />
+      <p className="text-sm">{message}</p>
     </div>
   );
 }
