@@ -154,15 +154,13 @@ export default function App() {
         </div>
 
         {selectedNode && (
-          <div className="fixed inset-0 z-40 md:static md:inset-auto md:z-auto">
-            <NodeDetailPanel
-              routeId={routeId}
-              node={selectedNode}
-              onClose={() => setSelectedNodeId(null)}
-              onPassed={celebrate}
-              onContinue={handleContinue}
-            />
-          </div>
+          <NodeDetailPanel
+            routeId={routeId}
+            node={selectedNode}
+            onClose={() => setSelectedNodeId(null)}
+            onPassed={celebrate}
+            onContinue={handleContinue}
+          />
         )}
       </div>
     </main>
