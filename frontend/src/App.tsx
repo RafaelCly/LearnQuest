@@ -176,6 +176,7 @@ export default function App() {
 
         {selectedNode && (
           <NodeDetailPanel
+            key={selectedNode.id}
             routeId={routeId}
             node={selectedNode}
             onClose={() => setSelectedNodeId(null)}
