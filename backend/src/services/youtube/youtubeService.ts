@@ -7,6 +7,7 @@ export interface VideoResult {
   channelTitle: string;
   durationSeconds: number;
   viewCount: number;
+  publishedAt: string;
   url: string;
 }
 
@@ -66,6 +67,7 @@ function toVideoResult(item: YouTubeVideoItem): VideoResult {
     channelTitle: item.snippet.channelTitle,
     durationSeconds: parseIsoDuration(item.contentDetails.duration),
     viewCount: Number(item.statistics.viewCount ?? "0"),
+    publishedAt: item.snippet.publishedAt,
     url: `https://www.youtube.com/watch?v=${item.id}`,
   };
 }
@@ -80,7 +82,11 @@ function rankScore(video: VideoResult): number {
   // con una banda de duración "dulce" (5-25 min) preferida para contenido educativo.
   const viewScore = Math.log10(video.viewCount + 1);
   const sweetSpot = video.durationSeconds >= 300 && video.durationSeconds <= 1500 ? 1.2 : 1;
-  return viewScore * sweetSpot;
+  // Empuja contenido reciente sin castigar clásicos evergreen con muchas vistas:
+  // 1.15x a los 0 años, baja ~3%/año, piso en 0.75x (nunca invalida un video top por viejo).
+  const ageYears = (Date.now() - new Date(video.publishedAt).getTime()) / (1000 * 60 * 60 * 24 * 365);
+  const recencyFactor = Math.max(0.75, 1.15 - ageYears * 0.03);
+  return viewScore * sweetSpot * recencyFactor;
 }
 
 function parseIsoDuration(iso: string): number {
@@ -96,7 +102,7 @@ interface YouTubeSearchResponse {
 
 interface YouTubeVideoItem {
   id: string;
-  snippet: { title: string; channelTitle: string };
+  snippet: { title: string; channelTitle: string; publishedAt: string };
   contentDetails: { duration: string };
   statistics: { viewCount?: string };
 }

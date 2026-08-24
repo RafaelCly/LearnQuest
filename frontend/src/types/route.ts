@@ -24,6 +24,7 @@ export interface VideoResult {
   channelTitle: string;
   durationSeconds: number;
   viewCount: number;
+  publishedAt: string;
   url: string;
 }
 
