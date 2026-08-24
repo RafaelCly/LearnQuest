@@ -4,10 +4,16 @@ import { ContentTypeSchema } from "./curriculum.schema.js";
 export { ContentTypeSchema };
 export type ContentType = z.infer<typeof ContentTypeSchema>;
 
+/** Cuántas preguntas mínimas se generan para retos de tipo quiz/flashcard. */
+export const MIN_QUESTIONS_PER_CHALLENGE = 10;
+/** % de aciertos necesario para marcar el nodo como completado. */
+export const PASS_THRESHOLD = 0.7;
+
 /**
  * Unión discriminada por "kind": cada tipo de reto tiene su propia forma.
- * El frontend hace switch(challenge.kind) y renderiza el componente correcto
- * (CodeChallenge / QuizChallenge / FlashcardChallenge) sin adivinar campos.
+ * Quiz y flashcard llevan una LISTA de preguntas (no una sola) — el usuario
+ * las responde una por una y el nodo se completa si acierta al menos
+ * PASS_THRESHOLD del total, no con una sola pregunta de suerte.
  */
 
 const CodeChallengeSchema = z.object({
@@ -19,20 +25,28 @@ const CodeChallengeSchema = z.object({
   testCode: z.string(), // se ejecuta en sandbox contra la solución del usuario
 });
 
-const QuizChallengeSchema = z.object({
-  kind: z.literal("quiz"),
-  contentType: z.literal("factual"),
+const QuizQuestionSchema = z.object({
   prompt: z.string().min(1),
   options: z.array(z.string()).min(2).max(6),
   correctOptionIndex: z.number().int().min(0),
   explanation: z.string(),
 });
 
+const QuizChallengeSchema = z.object({
+  kind: z.literal("quiz"),
+  contentType: z.literal("factual"),
+  items: z.array(QuizQuestionSchema).min(MIN_QUESTIONS_PER_CHALLENGE),
+});
+
+const FlashcardItemSchema = z.object({
+  prompt: z.string().min(1), // ej. "Traduce: 'buenos días'"
+  acceptedAnswers: z.array(z.string()).min(1), // variantes aceptadas
+});
+
 const FlashcardChallengeSchema = z.object({
   kind: z.literal("flashcard"),
   contentType: z.literal("language"),
-  prompt: z.string().min(1), // ej. "Traduce: 'buenos días'"
-  acceptedAnswers: z.array(z.string()).min(1), // variantes aceptadas
+  items: z.array(FlashcardItemSchema).min(MIN_QUESTIONS_PER_CHALLENGE),
 });
 
 const OpenResponseChallengeSchema = z.object({
@@ -49,6 +63,8 @@ export const ChallengeSchema = z.discriminatedUnion("kind", [
   OpenResponseChallengeSchema,
 ]);
 export type Challenge = z.infer<typeof ChallengeSchema>;
+export type QuizQuestion = z.infer<typeof QuizQuestionSchema>;
+export type FlashcardItem = z.infer<typeof FlashcardItemSchema>;
 
 export const CHALLENGE_JSON_SCHEMA_BY_TYPE: Record<ContentType, unknown> = {
   procedural: {
@@ -73,12 +89,24 @@ export const CHALLENGE_JSON_SCHEMA_BY_TYPE: Record<ContentType, unknown> = {
       type: "object",
       additionalProperties: false,
       properties: {
-        prompt: { type: "string" },
-        options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 6 },
-        correctOptionIndex: { type: "integer" },
-        explanation: { type: "string" },
+        items: {
+          type: "array",
+          minItems: MIN_QUESTIONS_PER_CHALLENGE,
+          maxItems: MIN_QUESTIONS_PER_CHALLENGE,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              prompt: { type: "string" },
+              options: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 6 },
+              correctOptionIndex: { type: "integer" },
+              explanation: { type: "string" },
+            },
+            required: ["prompt", "options", "correctOptionIndex", "explanation"],
+          },
+        },
       },
-      required: ["prompt", "options", "correctOptionIndex", "explanation"],
+      required: ["items"],
     },
   },
   language: {
@@ -88,10 +116,22 @@ export const CHALLENGE_JSON_SCHEMA_BY_TYPE: Record<ContentType, unknown> = {
       type: "object",
       additionalProperties: false,
       properties: {
-        prompt: { type: "string" },
-        acceptedAnswers: { type: "array", items: { type: "string" }, minItems: 1 },
+        items: {
+          type: "array",
+          minItems: MIN_QUESTIONS_PER_CHALLENGE,
+          maxItems: MIN_QUESTIONS_PER_CHALLENGE,
+          items: {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              prompt: { type: "string" },
+              acceptedAnswers: { type: "array", items: { type: "string" }, minItems: 1 },
+            },
+            required: ["prompt", "acceptedAnswers"],
+          },
+        },
       },
-      required: ["prompt", "acceptedAnswers"],
+      required: ["items"],
     },
   },
   creative: {

@@ -1,6 +1,11 @@
 import type OpenAI from "openai";
 import { CurriculumSchema, CURRICULUM_JSON_SCHEMA, type Curriculum } from "../../../schemas/curriculum.schema.js";
-import { ChallengeSchema, CHALLENGE_JSON_SCHEMA_BY_TYPE, type Challenge } from "../../../schemas/challenge.schema.js";
+import {
+  ChallengeSchema,
+  CHALLENGE_JSON_SCHEMA_BY_TYPE,
+  MIN_QUESTIONS_PER_CHALLENGE,
+  type Challenge,
+} from "../../../schemas/challenge.schema.js";
 import type {
   LLMProvider,
   GenerateCurriculumInput,
@@ -68,12 +73,16 @@ export abstract class BaseChatCompletionsProvider implements LLMProvider {
 
   async generateChallenge({ nodeTitle, nodeSummary, contentType, videoTranscript }: GenerateChallengeInput): Promise<Challenge> {
     const jsonSchema = CHALLENGE_JSON_SCHEMA_BY_TYPE[contentType];
+    const needsMultipleItems = contentType === "factual" || contentType === "language";
     const completion = await this.client.chat.completions.create({
       model: this.model,
       messages: [
         {
           role: "system",
-          content: `Genera un reto práctico de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo.`,
+          content: needsMultipleItems
+            ? `Genera exactamente ${MIN_QUESTIONS_PER_CHALLENGE} preguntas de práctica de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo. ` +
+              "Varía la dificultad y el ángulo de cada pregunta (no repitas la misma idea reformulada) para cubrir el tema con profundidad real."
+            : `Genera un reto práctico de tipo "${contentType}" para validar que el usuario aprendió el contenido del nodo.`,
         },
         {
           role: "user",

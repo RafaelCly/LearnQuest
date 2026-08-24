@@ -2,6 +2,7 @@ import { getLLMProvider } from "../llm/index.js";
 import { fetchTranscript } from "../transcript/transcriptService.js";
 import { routeRepository } from "../../repositories/index.js";
 import { NotFoundError } from "../../repositories/routeRepository.js";
+import { PASS_THRESHOLD } from "../../schemas/challenge.schema.js";
 import type { Challenge } from "../../schemas/challenge.schema.js";
 import type { GradeResult } from "../llm/types.js";
 
@@ -30,38 +31,54 @@ export async function getOrGenerateChallenge(routeId: string, nodeId: string): P
 }
 
 export interface SubmissionInput {
-  quizOptionIndex?: number;
-  flashcardAnswer?: string;
+  /** Índice de opción elegido por cada pregunta del quiz, en el mismo orden que `items`. */
+  quizAnswers?: number[];
+  /** Respuesta escrita por el usuario para cada flashcard, en el mismo orden que `items`. */
+  flashcardAnswers?: string[];
   codeSubmission?: string;
   openResponseText?: string;
+}
+
+export interface ItemResult {
+  correct: boolean;
+  explanationOrExpected: string;
+}
+
+export interface GradeResultDetailed extends GradeResult {
+  itemResults?: ItemResult[];
 }
 
 /**
  * Cada tipo de reto se califica con la estrategia MÁS barata que sea confiable
  * (ver one-pager de la idea): quiz/flashcard se comparan directo, sin gastar
- * una sola llamada de IA. Código y respuesta abierta sí la necesitan.
+ * una sola llamada de IA. El nodo se completa si el usuario acierta al menos
+ * PASS_THRESHOLD del total de preguntas, no con una sola de suerte.
  */
 export async function gradeSubmission(
   routeId: string,
   nodeId: string,
   submission: SubmissionInput
-): Promise<GradeResult> {
+): Promise<GradeResultDetailed> {
   const challenge = await getOrGenerateChallenge(routeId, nodeId);
 
   switch (challenge.kind) {
     case "quiz": {
-      const passed = submission.quizOptionIndex === challenge.correctOptionIndex;
-      return { passed, score: passed ? 100 : 0, feedback: challenge.explanation };
+      const answers = submission.quizAnswers ?? [];
+      const itemResults: ItemResult[] = challenge.items.map((item, i) => ({
+        correct: answers[i] === item.correctOptionIndex,
+        explanationOrExpected: item.explanation,
+      }));
+      return summarize(itemResults, "quiz");
     }
 
     case "flashcard": {
-      const normalized = (submission.flashcardAnswer ?? "").trim().toLowerCase();
-      const passed = challenge.acceptedAnswers.some((a) => a.trim().toLowerCase() === normalized);
-      return {
-        passed,
-        score: passed ? 100 : 0,
-        feedback: passed ? "¡Correcto!" : `Respuesta esperada: ${challenge.acceptedAnswers[0]}`,
-      };
+      const answers = submission.flashcardAnswers ?? [];
+      const itemResults: ItemResult[] = challenge.items.map((item, i) => {
+        const normalized = (answers[i] ?? "").trim().toLowerCase();
+        const correct = item.acceptedAnswers.some((a) => a.trim().toLowerCase() === normalized);
+        return { correct, explanationOrExpected: item.acceptedAnswers[0] ?? "" };
+      });
+      return summarize(itemResults, "flashcard");
     }
 
     case "code": {
@@ -82,4 +99,14 @@ export async function gradeSubmission(
       });
     }
   }
+}
+
+function summarize(itemResults: ItemResult[], kind: "quiz" | "flashcard"): GradeResultDetailed {
+  const correctCount = itemResults.filter((r) => r.correct).length;
+  const score = Math.round((correctCount / itemResults.length) * 100);
+  const passed = correctCount / itemResults.length >= PASS_THRESHOLD;
+  const feedback = passed
+    ? `¡Bien! Acertaste ${correctCount} de ${itemResults.length}.`
+    : `Acertaste ${correctCount} de ${itemResults.length} — necesitas al menos ${Math.ceil(itemResults.length * PASS_THRESHOLD)} para completar el nodo. Revisa las que fallaste e inténtalo de nuevo.`;
+  return { passed, score, feedback, itemResults };
 }

@@ -14,8 +14,8 @@ export const GenerateRouteBodySchema = z.object({
 });
 
 export const SubmitChallengeBodySchema = z.object({
-  quizOptionIndex: z.number().int().optional(),
-  flashcardAnswer: z.string().optional(),
+  quizAnswers: z.array(z.number().int()).optional(),
+  flashcardAnswers: z.array(z.string()).optional(),
   codeSubmission: z.string().optional(),
   openResponseText: z.string().optional(),
 });
@@ -134,14 +134,18 @@ function toRouteView(route: Awaited<ReturnType<typeof generateRoute>>, completed
 // (correctOptionIndex, acceptedAnswers, testCode) — se filtra acá.
 function toPublicChallenge(challenge: Challenge) {
   switch (challenge.kind) {
-    case "quiz": {
-      const { correctOptionIndex: _correctOptionIndex, explanation: _explanation, ...rest } = challenge;
-      return rest;
-    }
-    case "flashcard": {
-      const { acceptedAnswers: _acceptedAnswers, ...rest } = challenge;
-      return rest;
-    }
+    case "quiz":
+      return {
+        kind: challenge.kind,
+        contentType: challenge.contentType,
+        items: challenge.items.map(({ correctOptionIndex: _correctOptionIndex, explanation: _explanation, ...rest }) => rest),
+      };
+    case "flashcard":
+      return {
+        kind: challenge.kind,
+        contentType: challenge.contentType,
+        items: challenge.items.map(({ acceptedAnswers: _acceptedAnswers, ...rest }) => rest),
+      };
     case "code": {
       const { testCode: _testCode, ...rest } = challenge;
       return rest;
