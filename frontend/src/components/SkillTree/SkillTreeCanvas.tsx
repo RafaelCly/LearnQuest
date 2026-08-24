@@ -48,7 +48,7 @@ export function SkillTreeCanvas({ nodes, onSelectNode, celebratingNodeId }: Skil
         elementsSelectable
       >
         <Background color="var(--color-border)" gap={24} />
-        <Controls showInteractive={false} />
+        <Controls showInteractive={false} position="bottom-right" className="!shadow-none [&>button]:!border-border [&>button]:!bg-primary [&>button]:!fill-foreground [&>button]:hover:!bg-secondary" />
       </ReactFlow>
 
       <div className="pointer-events-none absolute bottom-3 left-3 flex flex-wrap gap-3 rounded-lg border border-border bg-primary/90 px-3 py-2 text-[11px] text-muted-foreground backdrop-blur-sm">
