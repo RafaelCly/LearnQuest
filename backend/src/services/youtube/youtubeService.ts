@@ -11,6 +11,15 @@ export interface VideoResult {
   url: string;
 }
 
+export interface NodeVideo extends VideoResult {
+  /**
+   * Siguientes mejores candidatos del mismo ranking, además del elegido.
+   * No cuesta cuota extra de YouTube: ya venían en la misma búsqueda, antes
+   * se descartaban todos menos el primero.
+   */
+  alternates: VideoResult[];
+}
+
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
 /**
@@ -18,7 +27,7 @@ const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
  * usa IA (sería gastar presupuesto de LLM en algo que un heurístico resuelve
  * gratis): se apoya en duración + vistas + antigüedad para evitar basura SEO.
  */
-export async function findBestVideoForNode(searchQuery: string, locale: LocaleCode): Promise<VideoResult | null> {
+export async function findBestVideoForNode(searchQuery: string, locale: LocaleCode): Promise<NodeVideo | null> {
   if (!env.YOUTUBE_API_KEY) {
     throw new Error("YOUTUBE_API_KEY no configurada");
   }
@@ -57,7 +66,9 @@ export async function findBestVideoForNode(searchQuery: string, locale: LocaleCo
   if (candidates.length === 0) return null;
 
   candidates.sort((a, b) => rankScore(b) - rankScore(a));
-  return candidates[0] ?? null;
+  const [best, ...rest] = candidates;
+  if (!best) return null;
+  return { ...best, alternates: rest.slice(0, 2) };
 }
 
 function toVideoResult(item: YouTubeVideoItem): VideoResult {

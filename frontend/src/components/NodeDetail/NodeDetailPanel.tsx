@@ -15,9 +15,10 @@ import {
   BookOpen,
   Languages,
   Palette,
+  Video,
   type LucideIcon,
 } from "lucide-react";
-import type { RouteNode, ContentType, Difficulty } from "../../types/route";
+import type { RouteNode, ContentType, Difficulty, VideoResult } from "../../types/route";
 import { fetchNodeDocument, fetchNodeChallenge, submitChallenge, type ChallengeSubmission } from "../../lib/api";
 import { ChallengePanel } from "./ChallengePanel";
 import { ChallengeResults } from "./ChallengeResults";
@@ -131,6 +132,10 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
                 </div>
               )}
 
+              {node.video && node.video.alternates.length > 0 && (
+                <OtherVideosList videos={node.video.alternates} />
+              )}
+
               <NodeMetaCard node={node} />
 
               <button
@@ -214,6 +219,35 @@ export function NodeDetailPanel({ routeId, node, onClose, onPassed, onContinue }
  * mostraba en ningún lado de esta vista: tipo de contenido, dificultad,
  * tiempo estimado -- ya vivían en `node`, solo no se usaban acá.
  */
+/**
+ * Los candidatos descartados por el ranking (siguientes 2 mejores según el
+ * mismo heurístico de vistas/duración/antigüedad, ver youtubeService.ts) no
+ * cuestan cuota extra de YouTube -- antes se tiraban, ahora se muestran como
+ * alternativas por si el video elegido no le calza al usuario.
+ */
+function OtherVideosList({ videos }: { videos: VideoResult[] }) {
+  return (
+    <div className="mt-4 space-y-1.5">
+      <p className="text-xs font-semibold text-muted-foreground">Otros videos que también pueden servir</p>
+      <ul className="space-y-1">
+        {videos.map((v) => (
+          <li key={v.videoId}>
+            <a
+              href={v.url}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 rounded-lg px-1.5 py-1 text-xs text-muted-foreground hover:bg-secondary/40 hover:text-foreground transition-colors"
+            >
+              <Video size={13} className="shrink-0 text-muted-foreground" />
+              <span className="truncate">{v.title}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 function NodeMetaCard({ node }: { node: RouteNode }) {
   const ContentIcon = CONTENT_TYPE_ICON[node.contentType];
   return (

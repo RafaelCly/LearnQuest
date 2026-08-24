@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { getLLMProvider } from "../llm/index.js";
-import { findBestVideoForNode, type VideoResult } from "../youtube/youtubeService.js";
+import { findBestVideoForNode, type NodeVideo } from "../youtube/youtubeService.js";
 import { routeRepository } from "../../repositories/index.js";
 import type { Route } from "../../models/route.js";
 import type { CurriculumNode } from "../../schemas/curriculum.schema.js";
@@ -43,8 +43,8 @@ async function fetchVideosWithConcurrencyLimit(
   nodes: CurriculumNode[],
   locale: LocaleCode,
   concurrency: number
-): Promise<Record<string, VideoResult | null>> {
-  const results: Record<string, VideoResult | null> = {};
+): Promise<Record<string, NodeVideo | null>> {
+  const results: Record<string, NodeVideo | null> = {};
   const queue = [...nodes];
 
   async function worker() {

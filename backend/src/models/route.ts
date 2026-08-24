@@ -1,6 +1,6 @@
 import type { Curriculum, CurriculumNode } from "../schemas/curriculum.schema.js";
 import type { Challenge } from "../schemas/challenge.schema.js";
-import type { VideoResult } from "../services/youtube/youtubeService.js";
+import type { NodeVideo } from "../services/youtube/youtubeService.js";
 import type { NodeDocument } from "../services/llm/types.js";
 import type { LocaleCode } from "../schemas/locale.js";
 
@@ -10,7 +10,7 @@ export interface Route {
   id: string;
   locale: LocaleCode;
   curriculum: Curriculum;
-  videosByNodeId: Record<string, VideoResult | null>;
+  videosByNodeId: Record<string, NodeVideo | null>;
   documentsByNodeId: Record<string, NodeDocument | undefined>;
   challengesByNodeId: Record<string, Challenge | undefined>;
   createdAt: string;

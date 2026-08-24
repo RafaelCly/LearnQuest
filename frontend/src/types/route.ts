@@ -38,7 +38,7 @@ export interface RouteNode {
   prerequisites: string[];
   estimatedMinutes: number;
   status: NodeStatus;
-  video: VideoResult | null;
+  video: (VideoResult & { alternates: VideoResult[] }) | null;
 }
 
 export interface RouteView {
