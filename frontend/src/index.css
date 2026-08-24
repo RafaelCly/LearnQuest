@@ -55,6 +55,11 @@ body {
   color: var(--color-foreground);
 }
 
+.hero-glow {
+  background: radial-gradient(circle, var(--color-node-active-glow) 0%, transparent 70%);
+  filter: blur(4px);
+}
+
 /* Documento complementario: markdown renderizado por react-markdown */
 .doc-prose {
   --tw-prose-body: var(--color-foreground);

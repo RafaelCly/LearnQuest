@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Sparkles, RotateCcw, ArrowLeft, Globe } from "lucide-react";
+import { Sparkles, RotateCcw, ArrowLeft, Video, FileText, Swords, ChevronRight, type LucideIcon } from "lucide-react";
 import { generateRoute, fetchRoute } from "./lib/api";
 import { SkillTreeCanvas } from "./components/SkillTree/SkillTreeCanvas";
 import { ProgressBar } from "./components/ProgressBar";
@@ -67,55 +67,76 @@ export default function App() {
 
   if (!routeId) {
     return (
-      <main className="min-h-dvh flex items-center justify-center px-4">
+      <main className="min-h-dvh flex items-center justify-center px-4 py-12">
         <form
-          className="w-full max-w-lg space-y-4 fade-up-enter"
+          className="w-full max-w-lg space-y-6 fade-up-enter"
           onSubmit={(e) => {
             e.preventDefault();
             if (topic.trim()) generateMutation.mutate({ topic: topic.trim(), locale });
           }}
         >
-          <div className="flex items-center gap-2 text-accent">
-            <Sparkles size={22} />
-            <h1 className="text-2xl font-bold text-foreground">LearnQuest</h1>
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="relative flex h-16 w-16 items-center justify-center">
+              <div className="hero-glow absolute inset-[-14px]" aria-hidden />
+              <div className="relative flex h-16 w-16 items-center justify-center rounded-full border-[3px] border-node-active-border bg-node-active-bg text-node-active-fg shadow-[0_0_0_6px_var(--color-node-active-glow)]">
+                <Sparkles size={26} />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-foreground">LearnQuest</h1>
+              <p className="mt-1.5 text-sm text-muted-foreground max-w-sm">
+                Escribe un tema y genera una ruta de aprendizaje gamificada, paso a paso.
+              </p>
+            </div>
+
+            {/* Mini preview del camino: video -> documento -> reto, antes de generar nada */}
+            <div className="flex items-center gap-1.5 text-muted-foreground" aria-hidden>
+              <MiniStep icon={Video} label="Video" />
+              <ChevronRight size={14} className="text-border shrink-0" />
+              <MiniStep icon={FileText} label="Documento" />
+              <ChevronRight size={14} className="text-border shrink-0" />
+              <MiniStep icon={Swords} label="Reto" />
+            </div>
           </div>
-          <p className="text-muted-foreground text-sm">
-            Escribe un tema y genera una ruta de aprendizaje gamificada con videos, documentos y retos prácticos.
-          </p>
 
-          <input
-            type="text"
-            value={topic}
-            disabled={generateMutation.isPending}
-            onChange={(e) => setTopic(e.target.value)}
-            placeholder="Ej. React Hooks, Historia del Perú, Verbos irregulares en inglés..."
-            className="w-full px-4 py-3 rounded-lg border border-border bg-secondary/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 transition-shadow"
-          />
-
-          <label className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 px-4 py-2.5">
-            <Globe size={16} className="shrink-0 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground shrink-0">Idioma del contenido</span>
-            <select
-              value={locale}
+          <div className="space-y-3 rounded-2xl border border-border bg-primary/60 p-4 backdrop-blur-sm">
+            <input
+              type="text"
+              value={topic}
               disabled={generateMutation.isPending}
-              onChange={(e) => setLocale(e.target.value as LocaleCode)}
-              className="ml-auto bg-transparent text-sm font-medium text-foreground focus:outline-none disabled:opacity-60 cursor-pointer"
-            >
-              {LOCALE_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value} className="bg-primary">
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </label>
+              onChange={(e) => setTopic(e.target.value)}
+              placeholder="Ej. React Hooks, Historia del Perú, Verbos irregulares en inglés..."
+              className="w-full px-4 py-3 rounded-lg border border-border bg-secondary/40 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 transition-shadow"
+            />
 
-          <button
-            type="submit"
-            disabled={!topic.trim() || generateMutation.isPending}
-            className="w-full py-3 rounded-lg bg-action text-on-action font-semibold disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer transition-all active:scale-[0.98]"
-          >
-            {generateMutation.isPending ? "Generando..." : "Generar ruta"}
-          </button>
+            <div role="radiogroup" aria-label="Idioma del contenido" className="flex flex-wrap gap-1.5">
+              {LOCALE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={locale === opt.value}
+                  disabled={generateMutation.isPending}
+                  onClick={() => setLocale(opt.value)}
+                  className={`rounded-full border px-3 py-1.5 text-xs font-medium cursor-pointer transition-all active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
+                    locale === opt.value
+                      ? "border-action bg-action text-on-action"
+                      : "border-border bg-secondary/40 text-muted-foreground hover:border-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              type="submit"
+              disabled={!topic.trim() || generateMutation.isPending}
+              className="w-full py-3 rounded-lg bg-action text-on-action font-semibold shadow-[0_4px_20px_-4px_var(--color-action)]/40 disabled:opacity-60 disabled:shadow-none disabled:cursor-not-allowed cursor-pointer transition-all active:scale-[0.98]"
+            >
+              {generateMutation.isPending ? "Generando..." : "Generar ruta"}
+            </button>
+          </div>
 
           {generateMutation.isPending && (
             <p className="text-center text-sm text-muted-foreground animate-pulse" aria-live="polite">
@@ -186,5 +207,14 @@ export default function App() {
         )}
       </div>
     </main>
+  );
+}
+
+function MiniStep({ icon: Icon, label }: { icon: LucideIcon; label: string }) {
+  return (
+    <span className="flex items-center gap-1 rounded-full border border-border bg-secondary/30 px-2.5 py-1 text-[11px]">
+      <Icon size={11} />
+      {label}
+    </span>
   );
 }
